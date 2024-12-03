@@ -1,73 +1,42 @@
 import re
 
-def extract_multiplication_pairs(text: str):
-    pattern = re.compile(r'mul\((\d+),\s*(\d+)\)')
-    matches = pattern.finditer(text)
-    
-    results = []
-    for match in matches:
-        x = int(match.group(1))
-        y = int(match.group(2))
-        product = x * y
-        pos = match.start()
-        results.append((pos, product))
-    
-    return results
 
-def extract_dos(text:str):
-    pattern = re.compile(r'do\(\)')
-    matches = pattern.finditer(text)
-    
-    results = []
-    for match in matches:
-        pos = match.start()
-        results.append(pos)
-    
-    return results
-
-def extract_donts(text:str):
-    pattern = re.compile(r'don\'t\(\)')
-    matches = pattern.finditer(text)
-    
-    results = []
-    for match in matches:
-        pos = match.start()
-        results.append(pos)
-    
-    return results
-
-def extract_do_and_dont_expressions(text:str):
-    pattern = re.compile(r'do\(\)')
+def parse_text_for_valid_muls(text):
+    pattern = re.compile(
+        r"""
+        mul\((\d+),\s*(\d+)\)     # Match mul(x, y) with x and y as numbers
+        |                         # OR
+        do\(\)                    # Match do()
+        |                         # OR
+        don\'t\(\)                # Match don't()
+        """,
+        re.VERBOSE,
+    )
     matches = pattern.finditer(text)
 
-    pattern = re.compile(r'don\'t\(\)')
-    matches = pattern.finditer(text)
-    
     results = []
+    do_muls = True
     for match in matches:
-        pos = match.start()
-        results.append(pos)
-    
+        if match.group(1) and match.group(2):
+            if do_muls:
+                x = int(match.group(1))
+                y = int(match.group(2))
+                results.append(x * y)
+        elif match.group(0) == "do()":
+            do_muls = True
+        elif match.group(0) == "don't()":
+            do_muls = False
+
     return results
+
 
 def part_02() -> None:
-
-    with open("./day_03/input.txt", 'r') as file:
+    with open("./day_03/input.txt", "r") as file:
         text = file.read()
 
-    muls = extract_multiplication_pairs(text)
-    dos = extract_dos(text)
-    donts = extract_donts(text)
+    results = parse_text_for_valid_muls(text)
 
-    #products = []
-    #for product in muls
-    #   pos = product[0]
-    #   prod = product[1]
-    #
-
-    print(muls)
-    print(dos)
-    print(donts)
+    print(sum(results))
 
 
 if __name__ == "__main__":
