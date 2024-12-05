@@ -53,11 +53,11 @@ def part_01() -> None:
         if validate_update(update, page_to_predecessors, page_to_successors):
             valid_updates.append(update)
 
-    invalid_updates_middle_page: List[int] = []
+    valid_updates_middle_page: List[int] = []
     for update in valid_updates:
-        invalid_updates_middle_page.append(update[len(update) // 2])
+        valid_updates_middle_page.append(update[len(update) // 2])
 
-    print(sum(invalid_updates_middle_page))
+    print(sum(valid_updates_middle_page))
 
 
 if __name__ == "__main__":
