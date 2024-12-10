@@ -27,10 +27,8 @@ class Simulation:
         if next_pos in self.obstacles:
             self.guard_obstructed = True
             self.guard_dir = self._turn_map[self.guard_dir]
-
-        x = self.guard_pos[0] + self.guard_dir[0]
-        y = self.guard_pos[1] + self.guard_dir[1]
-        self.guard_pos = (x, y)
+        else:
+            self.guard_pos = (x, y)
 
         self.guard_oob = False
         if not 0 <= x <= self.bounds[0]:
@@ -67,41 +65,30 @@ def main() -> None:
     sim.guard_dir = init_guard_dir
 
     path = set()
-    while True:
+    while not sim.guard_oob:
         path.add(sim.guard_pos)
         sim.progress_simulation()
-        if sim.guard_oob:
-            break
 
-    print(len(path))
+    print(len(path)) # Part 1 - 4973
 
     loop_possibilities = set()
     for tile in path:
-        new_sim = copy(sim)
+        new_sim = Simulation()
         new_sim.obstacles = set.union(sim.obstacles, [tile])
+        new_sim.bounds = (max_x, max_y)
         new_sim.guard_pos = init_guard_pos
         new_sim.guard_dir = init_guard_dir
 
-        obstacle_encounters = {}
-        while True:
-            prev_guard_pos = new_sim.guard_pos
-            prev_guard_dir = new_sim.guard_dir
+        turns = set()
+        while not new_sim.guard_oob:
             new_sim.progress_simulation()
-
             if new_sim.guard_obstructed:
-                if (
-                    prev_guard_pos in obstacle_encounters
-                    and obstacle_encounters[prev_guard_pos] == prev_guard_dir
-                ):
+                if (new_sim.guard_pos, new_sim.guard_dir) in turns:
                     loop_possibilities.add(tile)
                     break
+                turns.add((new_sim.guard_pos, new_sim.guard_dir))
 
-                obstacle_encounters[prev_guard_pos] = prev_guard_dir
-
-            if new_sim.guard_oob:
-                break
-
-    print(len(loop_possibilities))
+    print(len(loop_possibilities)) # Part 2 - 1482
 
 
 if __name__ == "__main__":
