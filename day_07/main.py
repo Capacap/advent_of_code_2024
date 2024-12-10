@@ -33,6 +33,8 @@ def main() -> None:
             for i, op in enumerate(op_combo):
                 rhs = series[i + 1]
                 lhs = op(lhs, rhs)
+                if lhs > value:
+                    break
 
             if lhs == value:
                 valid = True
@@ -51,6 +53,8 @@ def main() -> None:
             for i, op in enumerate(op_combo):
                 rhs = series[i + 1]
                 lhs = op(lhs, rhs)
+                if lhs > value:
+                    break
 
             if lhs == value:
                 valid = True
