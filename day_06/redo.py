@@ -10,6 +10,7 @@ class Simulation:
         self.guard_dir: Tuple[int, int] = (0, 0)
         self.guard_oob: bool = False
         self.guard_obstructed: bool = False
+        self._turn_map = {(0, -1): (1, 0), (-1, 0): (0, -1), (1, 0): (0, 1), (0, 1): (-1, 0)}
 
     def progress_simulation(self):
         x = self.guard_pos[0] + self.guard_dir[0]
@@ -19,7 +20,7 @@ class Simulation:
         self.guard_obstructed = False
         if next_pos in self.obstacles:
             self.guard_obstructed = True
-            self.guard_dir = turn_right(self.guard_dir)
+            self.guard_dir = self._turn_map[self.guard_dir]
             x = self.guard_pos[0] + self.guard_dir[0]
             y = self.guard_pos[1] + self.guard_dir[1]
 
@@ -31,13 +32,6 @@ class Simulation:
 
         if not 0 <= y <= self.bounds[1]:
             self.guard_oob = True
-
-
-TURN_MAP = {(0, -1): (1, 0), (-1, 0): (0, -1), (1, 0): (0, 1), (0, 1): (-1, 0)}
-
-
-def turn_right(dir):
-    return TURN_MAP.get(dir, (0, 0))
 
 
 def main() -> None:
