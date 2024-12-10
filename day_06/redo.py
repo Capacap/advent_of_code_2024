@@ -19,12 +19,12 @@ class Simulation:
         self.guard_obstructed = False
         if next_pos in self.obstacles:
             self.guard_obstructed = True
-            self.guard_dir = get_turn_direction(self.guard_dir)
+            self.guard_dir = turn_right(self.guard_dir)
             x = self.guard_pos[0] + self.guard_dir[0]
             y = self.guard_pos[1] + self.guard_dir[1]
 
         self.guard_pos = (x, y)
-        
+
         self.guard_oob = False
         if not 0 <= x <= self.bounds[0]:
             self.guard_oob = True
@@ -33,17 +33,11 @@ class Simulation:
             self.guard_oob = True
 
 
-def get_turn_direction(dir):
-    match dir:
-        case (0, -1):
-            dir = (1, 0)  # ^ - >
-        case (-1, 0):
-            dir = (0, -1)  # < - ^
-        case (1, 0):
-            dir = (0, 1)  # > - v
-        case (0, 1):
-            dir = (-1, 0)  # v - <
-    return dir
+TURN_MAP = {(0, -1): (1, 0), (-1, 0): (0, -1), (1, 0): (0, 1), (0, 1): (-1, 0)}
+
+
+def turn_right(dir):
+    return TURN_MAP.get(dir, (0, 0))
 
 
 def main() -> None:
@@ -52,7 +46,7 @@ def main() -> None:
     obstacles = set()
     max_x = 0
     max_y = 0
-    
+
     with open("./day_06/input.txt", "r") as file:
         for y, line in enumerate(file):
             max_y = max(max_y, y)
@@ -81,13 +75,13 @@ def main() -> None:
 
     print(len(path))
 
-    l = set()
+    loop_possibilities = set()
     for tile in path:
         new_sim = copy(sim)
         new_sim.obstacles = set.union(sim.obstacles, [tile])
         new_sim.guard_pos = init_guard_pos
         new_sim.guard_dir = init_guard_dir
-        
+
         obstacle_encounters = {}
         while True:
             prev_guard_pos = new_sim.guard_pos
@@ -95,16 +89,19 @@ def main() -> None:
             new_sim.progress_simulation()
 
             if new_sim.guard_obstructed:
-                if prev_guard_pos in obstacle_encounters and obstacle_encounters[prev_guard_pos] == prev_guard_dir:
-                    l.add(tile)
+                if (
+                    prev_guard_pos in obstacle_encounters
+                    and obstacle_encounters[prev_guard_pos] == prev_guard_dir
+                ):
+                    loop_possibilities.add(tile)
                     break
-                
+
                 obstacle_encounters[prev_guard_pos] = prev_guard_dir
 
             if new_sim.guard_oob:
                 break
 
-    print(len(l))
+    print(len(loop_possibilities))
 
 
 if __name__ == "__main__":
