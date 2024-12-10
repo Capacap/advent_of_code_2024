@@ -9,13 +9,16 @@ class Simulation:
         self.guard_pos: Tuple[int, int] = (0, 0)
         self.guard_dir: Tuple[int, int] = (0, 0)
         self.guard_oob: bool = False
+        self.guard_obstructed: bool = False
 
     def progress_simulation(self):
         x = self.guard_pos[0] + self.guard_dir[0]
         y = self.guard_pos[1] + self.guard_dir[1]
         next_pos = (x, y)
 
+        self.guard_obstructed = False
         if next_pos in self.obstacles:
+            self.guard_obstructed = True
             self.guard_dir = get_turn_direction(self.guard_dir)
             x = self.guard_pos[0] + self.guard_dir[0]
             y = self.guard_pos[1] + self.guard_dir[1]
@@ -69,45 +72,34 @@ def main() -> None:
     sim.guard_pos = init_guard_pos
     sim.guard_dir = init_guard_dir
 
-    path = []
-    tiles = set()
+    path = set()
     while True:
-        path.append(sim.guard_pos)
-        tiles.add(sim.guard_pos)
+        path.add(sim.guard_pos)
         sim.progress_simulation()
         if sim.guard_oob:
             break
 
-    print(len(tiles))
+    print(len(path))
 
     l = set()
-    for pos in path:
-        if pos == init_guard_pos:
-            continue
-
-        if pos in l:
-            continue
-
+    for tile in path:
         new_sim = copy(sim)
-        new_sim.obstacles = set.union(sim.obstacles, [pos])
+        new_sim.obstacles = set.union(sim.obstacles, [tile])
         new_sim.guard_pos = init_guard_pos
         new_sim.guard_dir = init_guard_dir
         
-        route = {}
-        rethread_count = 0
+        obstacle_encounters = {}
         while True:
-
-            prev_dir = new_sim.guard_dir
+            prev_guard_pos = new_sim.guard_pos
+            prev_guard_dir = new_sim.guard_dir
             new_sim.progress_simulation()
 
-            if new_sim.guard_pos in route:
-                if route[new_sim.guard_pos] == new_sim.guard_dir:
-                    rethread_count += 1
-                    if rethread_count > 10:
-                        l.add(pos)
-                        break
-            else:
-                route[new_sim.guard_pos] = prev_dir
+            if new_sim.guard_obstructed:
+                if prev_guard_pos in obstacle_encounters and obstacle_encounters[prev_guard_pos] == prev_guard_dir:
+                    l.add(tile)
+                    break
+                
+                obstacle_encounters[prev_guard_pos] = prev_guard_dir
 
             if new_sim.guard_oob:
                 break
