@@ -68,7 +68,6 @@ def main() -> None:
     for trailhead in trailheads:
         explored: set[tuple] = bfs(trailhead, heightmap, heightmap_bounds)
         trailhead_to_score[trailhead] = len([xy for xy in explored if heightmap[xy] == 9])
-
         trailhead_to_rating[trailhead] = 0
         for trailend in [xy for xy in explored if heightmap[xy] == 9]:
             paths = dfs(trailhead, trailend, [], [], {}, heightmap, heightmap_bounds)
