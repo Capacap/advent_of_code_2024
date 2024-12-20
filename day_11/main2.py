@@ -11,10 +11,10 @@ def split(parent):
         return [2024]
     
     if parent in precomputed_mul:
-        return precomputed_mul[parent]
+        return [precomputed_mul[parent]]
 
     if parent in precomputed_lhs:
-        return [precomputed_lhs[parent], precomputed_rhs[rhs]]
+        return [precomputed_lhs[parent], precomputed_rhs[parent]]
     
     str_number = str(parent)
     str_length = len(str_number)
@@ -36,38 +36,34 @@ def main() -> None:
         for substring in file.read().strip().split():
             initial_stones.append(int(substring))
 
-    # stones = initial_stones.copy()
-    # for i in range(25):
-    #     print(i)
-    #     for j in range(len(stones)):
-    #         stones[j] = split(stones[j], stones)
-
-    # print(len(stones)) # Part 1 - 203457
-
-    # stones = initial_stones.copy()
-    # for i in range(75):
-    #     print(i)
-    #     for j in range(len(stones)):
-    #         stones[j] = split(stones[j], stones)
-
     total_stone_count = 0
-    for stone in initial_stones:
-        stone_count = 0
-        total_children = []
+    for initial_stone in initial_stones:
+        if initial_stone in precomputed_stones:
+            total_stone_count += precomputed_stones[initial_stone]
+            continue
+
+        stones = [initial_stone]
+        final_child_count = 0
         for _ in range(75):
-            if stone in precomputed_stones:
-                stone_count = precomputed_stones[stone]
-                break
+            print(_)
+            
+            children = []
+            for i in range(len(stones)):
+                children.extend(split(stones[i]))
 
-            children = split(stone)
-            total_children.extend(children)
-            total_child_count = len(total_children)
-            precomputed_stones[stone] = total_child_count
-            stone = children[0]
-            stone_count = total_child_count
-        total_stone_count += stone_count
+            stones.clear()
+            for child in children:
+                if child in precomputed_stones:
+                    total_stone_count += precomputed_stones[child]
+                    continue
+                stones.append(child)
 
-    print(len(total_stone_count)) # Part 2
+        final_child_count = len(stones)
+        total_stone_count += final_child_count
+        precomputed_stones[initial_stone] = final_child_count
+
+
+    print(total_stone_count) # Part 2
 
 if __name__ == "__main__":
     main()
