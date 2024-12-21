@@ -1,60 +1,58 @@
-precomputed_stones = {}
+# import cProfile 
+# import pstats 
+# from pstats import SortKey
+from functools import cache
 
-class Stone():
-    __slots__ = ("number")
+@cache
+def mutate(stone: int) -> tuple[int]:
+    if stone == 0:
+        return (1,)
 
-    def __init__(self, number):
-        self.number: int = number
+    str_number: str = str(stone)
+    str_length: int = len(str_number)
+    if str_length % 2 == 0:
+        mid: int = str_length // 2
+        lhs: int = int(str_number[:mid])
+        rhs: int = int(str_number[mid:])
+        return (lhs, rhs)
+    
+    mul: int = stone * 2024
+    return (mul,)
 
-    def __repr__(self):
-        return f"{self.number}"
+@cache
+def count_final_mutations_recursive(stone: int, iterations: int) -> int:
+    if iterations == 0:
+        return 1
+    
+    final_mutations_count: int = 0
+    for mutated in mutate(stone):
+        final_mutations_count += count_final_mutations_recursive(mutated, iterations - 1)
+    return final_mutations_count
 
-    def split(self, collection):
-
-        if self.number in precomputed_stones:
-            stones = precomputed_stones[self.number]
-            self.number = stones[0]
-            collection.append(Stone(stones[1]))
-            return
-
-        if self.number == 0:
-            self.number = 1
-            return
-        
-        str_number = str(self.number)
-        str_length = len(str_number)
-        if str_length % 2 == 0:
-            mid = str_length // 2
-            lhs = int(str_number[:mid])
-            rhs = int(str_number[mid:])
-            precomputed_stones[self.number] = [lhs, rhs]
-            self.number = lhs
-            collection.append(Stone(rhs))
-            return
-        
-        self.number = self.number * 2024
 
 def main() -> None:
     initial_stones = []
     with open("./day_11/input.txt", "r") as file:
-        for substring in file.read().strip().split():
-            initial_stones.append(Stone(int(substring)))
+        initial_stones = [int(substring) for substring in file.read().strip().split()]
 
-    stones = initial_stones.copy()
-    for i in range(25):
-        print(i)
-        for j in range(len(stones)):
-            stones[j].split(stones)
+    final_generation_stone_count = 0
+    for init_stone in initial_stones:
+        final_generation_stone_count += count_final_mutations_recursive(init_stone, 25)
 
-    print(len(stones)) # Part 1 - 203457
+    print(final_generation_stone_count) # Part 1 - 203457
 
-    stones = initial_stones.copy()
-    for i in range(75):
-        print(i)
-        for j in range(len(stones)):
-            stones[j].split(stones)
+    final_generation_stone_count = 0
+    for init_stone in initial_stones:
+        final_generation_stone_count += count_final_mutations_recursive(init_stone, 75)
 
-    print(len(stones)) # Part 2
+    print(final_generation_stone_count) # Part 2 - 241394363462435
+
 
 if __name__ == "__main__":
-    main()
+    #profiler = cProfile.Profile() 
+    #profiler.enable() 
+    main() 
+    #profiler.disable() 
+    #stats = pstats.Stats(profiler) 
+    #stats.sort_stats(SortKey.TIME) 
+    #stats.print_stats()
