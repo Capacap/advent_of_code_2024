@@ -32,7 +32,7 @@ def calc_island_area(island: set[tuple]) -> int:
     return len(island)
 
 
-def calc_island_perimeter(island: set[tuple]):
+def calc_island_perimeter(island: set[tuple]) -> int:
     perimeter: int = 0
     for tile in island:
         for d in [(1, 0), (0, 1), (-1, 0), (0, -1)]:
