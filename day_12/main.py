@@ -95,13 +95,13 @@ def main() -> None:
     for island in islands:
         island_sides.append(calc_island_sides(island))
 
-    total_price = 0
+    total_price: int = 0
     for area, perimeter in zip(island_areas, island_perimeters):
         total_price += area * perimeter
 
     print(total_price) # Part 1 - 1473408
 
-    total_price = 0
+    total_price: int = 0
     for area, sides in zip(island_areas, island_sides):
         total_price += area * sides
 
