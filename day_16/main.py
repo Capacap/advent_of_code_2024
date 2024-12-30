@@ -117,6 +117,7 @@ def main():
 
     cost_map = calc_node_costs(graph, start_node, end_node)
     path_nodes = find_shortest_path_nodes(cost_map, graph, end_node)
+    print("COMBINED BEST PATHS NODES")
     visualize_graph(graph, path_nodes)
 
     print(cost_map[end_node]) # Part 1 - 106512
