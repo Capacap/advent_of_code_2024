@@ -1,102 +1,126 @@
 import math
-import heapq
+from functools import cache
+from collections import deque
 
-def angle_between(v1, v2):
-    dot_product = v1[0] * v2[0] + v1[1] * v2[1]
-    magnitude_v1 = math.sqrt(v1[0] ** 2 + v1[1] ** 2)
-    magnitude_v2 = math.sqrt(v2[0] ** 2 + v2[1] ** 2)
-    cos_theta = dot_product / (magnitude_v1 * magnitude_v2)
+@cache
+def calc_90deg_turns(a, b):
+    dot_product = a[0] * b[0] + a[1] * b[1]
+    magnitude_a = math.sqrt(a[0] ** 2 + a[1] ** 2)
+    magnitude_b = math.sqrt(b[0] ** 2 + b[1] ** 2)
+    cos_theta = dot_product / (magnitude_a * magnitude_b)
     cos_theta = max(-1.0, min(1.0, cos_theta))
     angle = math.degrees(math.acos(cos_theta))
-    return angle
+    turns = round(angle / 90)
+    return turns
 
-def parse_input(file_path):
-    walls = set()
+def visualize_graph(graph, highlight_nodes):
+    max_x, max_y = 0, 0
+    for x, y in graph:
+        max_x = max(max_x, x)
+        max_y = max(max_y, y)
+
+    rows = [["░" for _ in range(max_x + 2)] for _ in range(max_y + 2)]
+    
+    for x, y in graph:
+        rows[y][x] = "▒"
+
+    for x, y in highlight_nodes:
+        rows[y][x] = "█"
+
+    for row in rows:
+        print("".join(row))
+
+def build_node_graph(file_path):
+    graph = {}
+    nodes = set()
     start = None
     end = None
     with open(file_path, "r") as file:
         lines = file.read().strip().split("\n")
         for y, line in enumerate(lines):
             for x, symbol in enumerate(line):
-                if symbol == "#":
-                    walls.add((x, y))
-                elif symbol == "S":
+                if symbol == ".":
+                    nodes.add((x, y))
+                if symbol == "S":
+                    nodes.add((x, y))
                     start = (x, y)
-                elif symbol == "E":
+                if symbol == "E":
+                    nodes.add((x, y))
                     end = (x, y)
-    return start, end, walls
 
-def print_maze(walls, path):
-    max_x, max_y = 0, 0
-    for w in walls:
-        max_x = max(max_x, w[0])
-        max_y = max(max_y, w[1])
+    for x, y in nodes:
+        graph[(x, y)] = set()
+        for d in [(1, 0), (-1, 0), (0, 1), (0, -1)]:
+            xy = x + d[0], y + d[1]
+            if xy in nodes:
+                graph[(x, y)].add(xy)
 
-    rows = [["." for _ in range(max_x + 2)] for _ in range(max_y + 1)]
+    return graph, start, end
+  
+def calc_node_costs(graph, start_node, end_node):
+    heading_map = {start_node: (1, 0)}
+    cost_map = {}
+    frontier = deque()
 
-    for w in walls:
-        rows[w[1]][w[0]] = "#"
+    cost_map[start_node] = 0
+    frontier.append(start_node) 
+    
+    while frontier:
+        current_node = frontier.popleft()
 
-    for i in range(len(path)):
-        heading = (-1, 0)
-        if i > 0:
-            prev = path[i-1]
-            next = path[i]
-            heading = (next[0] - prev[0], next[1] - prev[1])
-
-        symbol = "x"
-        if heading == (1, 0):
-            symbol = ">"
-        elif heading == (-1, 0):
-            symbol = "<"
-        elif heading == (0, -1):
-            symbol = "^"
-        elif heading == (0, 1):
-            symbol = "v"
-
-        rows[path[i][1]][path[i][0]] = symbol
-
-    for row in rows:
-        print("".join(row))
-
-def main():
-    start, end, walls = parse_input("./day_16/input.txt")
-
-    travel_map = {start: None}
-    cost_map = {start: 0}
-    heading_map = {start: (1, 0)}
-    frontier_queue = [(0, start)]
-
-    while frontier_queue:
-        current_cost, current_xy = heapq.heappop(frontier_queue)
-
-        if current_cost > cost_map[current_xy]:
+        if current_node == end_node:
             continue
 
-        for heading in [(1, 0), (-1, 0), (0, 1), (0, -1)]:
-            neighbour_xy = (current_xy[0] + heading[0], current_xy[1] + heading[1])
+        for neighbour_node in graph[current_node]:
+            new_heading = neighbour_node[0] - current_node[0], neighbour_node[1] - current_node[1]
+            turns = calc_90deg_turns(heading_map[current_node], new_heading)
+            new_cost = cost_map[current_node] + 1 + turns * 1000
+            old_cost = cost_map.get(neighbour_node, math.inf)
+            if new_cost < old_cost:
+                heading_map[neighbour_node] = new_heading
+                cost_map[neighbour_node] = new_cost
+                frontier.append(neighbour_node)
 
-            if neighbour_xy in walls:
+    return cost_map
+
+def find_shortest_path_nodes(cost_map, graph, end_node):
+    frontier = deque()
+    explored = set()
+
+    frontier.append((end_node, cost_map[end_node], (1, 0)))
+    frontier.append((end_node, cost_map[end_node], (-1, 0))) 
+    frontier.append((end_node, cost_map[end_node], (0, 1))) 
+    frontier.append((end_node, cost_map[end_node], (0, -1))) 
+    explored.add(end_node)
+    
+    while frontier:
+        current_node, current_cost, current_heading = frontier.popleft()
+        explored.add(current_node)
+
+        for neighbour_node in graph[current_node]:
+            if neighbour_node in explored or neighbour_node not in cost_map:
                 continue
 
-            angle = angle_between(heading_map[current_xy], heading)
-            turns = round(angle / 90)
-            cost = current_cost + 1 + turns * 1000
-            if cost < cost_map.get(neighbour_xy, math.inf):
-                travel_map[neighbour_xy] = current_xy
-                cost_map[neighbour_xy] = cost
-                heading_map[neighbour_xy] = heading
-                heapq.heappush(frontier_queue, (cost, neighbour_xy))
+            new_heading = neighbour_node[0] - current_node[0], neighbour_node[1] - current_node[1]
+            turns = calc_90deg_turns(current_heading, new_heading)
+            new_cost = current_cost - 1 - turns * 1000
 
-    path = []
-    current = end
-    while travel_map[current]:
-        current = travel_map[current]
-        path.append(current)
-    path.reverse()
+            if new_cost == cost_map[neighbour_node] or new_cost == cost_map[neighbour_node] - 1000: 
+                frontier.append((neighbour_node, new_cost, new_heading))
 
-    print_maze(walls, path)
-    print(cost_map[end]) # Part 1 - 106512
+    return explored
+
+def main():
+    graph, start_node, end_node = build_node_graph("./day_16/input.txt")
+    print("ORIGINAL GRAPH")
+    visualize_graph(graph, graph)
+
+    cost_map = calc_node_costs(graph, start_node, end_node)
+    path_nodes = find_shortest_path_nodes(cost_map, graph, end_node)
+    visualize_graph(graph, path_nodes)
+
+    print(cost_map[end_node]) # Part 1 - 106512
+    print(len(path_nodes)) # Part 2 - 563
 
 if __name__ == "__main__":
     main()
